@@ -1,1 +1,1 @@
-# SDLkeibaTool
+# Keiba Smart Picker
