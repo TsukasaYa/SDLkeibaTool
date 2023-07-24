@@ -26,7 +26,7 @@ class QueryInterpreter:
             elif len(stmt) < 2:
                 input_error(stmt, ", few token")
                 continue
-            
+            #---FormFilter
             elif stmt[0] == 'ff':
                 if stmt[1] == 'clear' or stmt[1] == 'c':
                     self.ff.pre = None
@@ -74,6 +74,7 @@ class QueryInterpreter:
                     self.ff.course = None
                 else:
                     input_error(stmt, "at 2nd token")
+            #---FormEvaluator   
             elif stmt[0] == 'fe':
                 if stmt[1] == 'clear' or stmt[1] == 'c':
                     self.fe.win = None
@@ -94,6 +95,7 @@ class QueryInterpreter:
                             input_error(stmt, ',many argument')
                     except AttributeError:
                         input_error(stmt,'at field name')
+            #---HorseFilter
             elif stmt[0] == 'hf':
                 if stmt[1] == 'clear' or stmt[1] == 'c':
                     self.hf.chaku = None
