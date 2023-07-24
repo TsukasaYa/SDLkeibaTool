@@ -2,6 +2,8 @@ import raceList
 from race import Race
 from horse import Horse, HorseFilter
 import form
+from interpreter import QueryInterpreter
+
 import matplotlib.pyplot as plt
 
 #回収率の計算
@@ -38,9 +40,7 @@ def dump_horses(hl):
     return
 
 # フィルター結果の表示
-def show_result(horse_list, filtered_list, label = True):
-    print_score(horse_list, filtered_list)
-
+def plot_horses(filtered_list, label = False):
     x =[]
     y = []
     l = []
@@ -64,7 +64,7 @@ def show_result(horse_list, filtered_list, label = True):
         if label == True:
             plt.text(x[i],y[i],label)
     plt.show()
-    #plt.pause(2)
+
 
 def print_score(horse_list, filtered_list):
     horses_win = [h for h in horse_list if str(h.get_chakujun()).isdigit() and int(h.get_chakujun()) == 1]
@@ -137,133 +137,23 @@ for r in races:
 ff = form.FormFilter()
 fe = form.FormEvaluator()
 hf = HorseFilter()
+qi = QueryInterpreter(hf,ff,fe)
+
+print(hf)
+print(ff)
+print(fe)
+plot_horses(horse_list)
+print_score(horse_list, horse_list)
 
 loop = True
 while(loop):
+    print('クエリは次の要素をスペース区切りで記入、&で複数可: [hf/fe/ff] [変更したいフィールド] [変更後の値]+')
+    qi.interpret(input('>'))
+    
     print(hf)
     print(ff)
     print(fe)
 
     filtered_horses = [h for h in horse_list if hf.filter(h) == True]
     filtered_list = [h for h in filtered_horses if fe.eval(ff.filter(h.form))]
-    show_result(horse_list, filtered_list, False)
-
-    print('クエリは次の要素をスペース区切りで記入、&で複数可: [hf/fe/ff] [変更したいフィールド] [変更後の値]+')
-    #入力をもとにフィルタを変更する
-    query = input('>')
-    for stmt in query.split('&'):
-        stmt = [token for token in stmt.split(' ') if token != '']
-        if len(stmt) >= 1 and (stmt[0] == 'q' or stmt[0] == 'quit'):
-            loop = False
-            continue
-        
-        if stmt[0] == 'dump':
-            dump_horses(filtered_list)
-        elif len(stmt) < 2:
-            input_error(stmt, ", few token")
-            continue
-        
-        if stmt[0] == 'ff':
-            if stmt[1] == 'clear' or stmt[1] == 'c':
-                ff.pre = None
-                ff.smile = None
-                ff.course = None
-                ff.race = None
-                ff.style = None
-                ff.post = None
-            elif stmt[1] == 'pre':
-                if len(stmt)== 2:
-                    ff.pre = None
-                else:
-                    ff.pre = int(stmt[2])
-            elif stmt[1] == 'smile':
-                if len(stmt)== 2:
-                    ff.smile = None
-                else:
-                    ff.smile = stmt[2:]
-            elif stmt[1] == 'course':
-                if len(stmt)== 2:
-                    ff.course = None
-                else:
-                    ff.course = stmt[2:]
-            elif stmt[1] == 'style':
-                if len(stmt)== 2:
-                    ff.style = None
-                else:
-                    ff.style = stmt[2:]
-            elif stmt[1] == 'race':
-                if len(stmt)== 2:
-                    ff.race = None
-                else:
-                    ff.race = stmt[2]
-            elif stmt[1] == 'post':
-                if len(stmt)== 2:
-                    ff.post = None
-                else:
-                    ff.post = int(stmt[2])
-            elif stmt[1] == 'crear':
-                ff.post = None
-                ff.pre = None
-                ff.course = None
-                ff.race = None
-                ff.smile= None
-                ff.course = None
-            else:
-                input_error(stmt, "at 2nd token")
-        elif stmt[0] == 'fe':
-            if stmt[1] == 'clear' or stmt[1] == 'c':
-                fe.win = None
-                fe.show = None
-                fe.rank = None
-                fe.last3f = None
-                fe.margin = None
-            else:
-                try:
-                    getattr(fe, stmt[1])
-                    if len(stmt) == 3:
-                        setattr(fe, stmt[1], float(stmt[2]))
-                    elif len(stmt) == 4:
-                        setattr(fe, stmt[1],[float(stmt[2]),float(stmt[3])])
-                    else:
-                        input_error(stmt)
-                except AttributeError:
-                    input_error(stmt)
-        elif stmt[0] == 'hf':
-            if stmt[1] == 'clear' or stmt[1] == 'c':
-                hf.chaku = None
-                hf.ninki = None
-                hf.odds = None
-                hf.jockey = None
-                hf.waku = None
-                hf.umaban = None
-                hf.last = None
-                hf.dist = None
-                hf.rest = None
-                hf.style = None
-            else:
-                try:
-                    getattr(hf, stmt[1])
-                    if len(stmt) == 2:
-                        setattr(hf, stmt[1], None)
-                    elif stmt[1] in ['style']:
-                        setattr(hf, stmt[1], stmt[2:])
-                    elif len(stmt) == 3:
-                        if(stmt[1] in ['jockey','last','style']):
-                            val = stmt[2]
-                        elif(stmt[1] in ['odds','dist']):
-                            val = float(stmt[2])
-                        else:
-                            val = int(stmt[2])
-                        setattr(hf, stmt[1], val)
-                    elif len(stmt) == 4:
-                        if stmt[1] in ['odds','dist']:
-                            val = [float(stmt[2]),float(stmt[3])]
-                        else:
-                            val = [int(stmt[2]), int(stmt[3])]
-                        setattr(hf, stmt[1], val)
-                    else:
-                        input_error(stmt)
-                except AttributeError:
-                    input_error(stmt)
-        else:
-            input_error(stmt, "at 1st token")
+    print_score(horse_list, filtered_list)
