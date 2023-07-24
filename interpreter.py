@@ -1,6 +1,7 @@
 from horse import HorseFilter
 from form import FormFilter, FormEvaluator
-import main
+
+import matplotlib.pyplot as plt
 
 
 class QueryInterpreter:
@@ -12,20 +13,21 @@ class QueryInterpreter:
     
     def interpret(self, query, fl):
         for stmt in query.split('&'):
+            if len(stmt) == 0:
+                continue
             stmt = [token for token in stmt.split(' ') if token != '']
-            if len(stmt) >= 1 and (stmt[0] == 'q' or stmt[0] == 'quit'):
-                loop = False
-                continue
-            
-            if stmt[0] == 'plot':
-                main.plot_horses(fl)
+
+            if stmt[0] == 'q' or stmt[0] == 'quit':
+                return -1
+            elif stmt[0] == 'plot':
+                plot_horses(fl)
             elif stmt[0] == 'dump':
-                main.dump_horses(fl)
+                dump_horses(fl)
             elif len(stmt) < 2:
-                input_error(stmt, ", self.few token")
+                input_error(stmt, ", few token")
                 continue
             
-            if stmt[0] == 'self.ff':
+            elif stmt[0] == 'ff':
                 if stmt[1] == 'clear' or stmt[1] == 'c':
                     self.ff.pre = None
                     self.ff.smile = None
@@ -57,7 +59,7 @@ class QueryInterpreter:
                     if len(stmt)== 2:
                         self.ff.race = None
                     else:
-                        self.ff.race = stmt[2]
+                        self.ff.race = stmt[2:]
                 elif stmt[1] == 'post':
                     if len(stmt)== 2:
                         self.ff.post = None
@@ -72,7 +74,7 @@ class QueryInterpreter:
                     self.ff.course = None
                 else:
                     input_error(stmt, "at 2nd token")
-            elif stmt[0] == 'self.fe':
+            elif stmt[0] == 'fe':
                 if stmt[1] == 'clear' or stmt[1] == 'c':
                     self.fe.win = None
                     self.fe.show = None
@@ -82,15 +84,17 @@ class QueryInterpreter:
                 else:
                     try:
                         getattr(self.fe, stmt[1])
-                        if len(stmt) == 3:
+                        if len(stmt) == 2:
+                            setattr(self.fe, stmt[1], None)
+                        elif len(stmt) == 3:
                             setattr(self.fe, stmt[1], float(stmt[2]))
                         elif len(stmt) == 4:
                             setattr(self.fe, stmt[1],[float(stmt[2]),float(stmt[3])])
                         else:
-                            input_error(stmt)
+                            input_error(stmt, ',many argument')
                     except AttributeError:
-                        input_error(stmt)
-            elif stmt[0] == 'self.hf':
+                        input_error(stmt,'at field name')
+            elif stmt[0] == 'hf':
                 if stmt[1] == 'clear' or stmt[1] == 'c':
                     self.hf.chaku = None
                     self.hf.ninki = None
@@ -124,14 +128,14 @@ class QueryInterpreter:
                                 val = [int(stmt[2]), int(stmt[3])]
                             setattr(self.hf, stmt[1], val)
                         else:
-                            input_error(stmt)
+                            input_error(stmt, ", many argument")
                     except AttributeError:
-                        input_error(stmt)
+                        input_error(stmt, "at field name")
             else:
                 input_error(stmt, "at 1st token")
 
 def input_error(stmt, opt = None):
-    msg = '[main.py] input is not valid '
+    msg = '[interpreter.py] input is not valid '
     if opt is not None:
         msg += opt
     
@@ -143,3 +147,35 @@ def input_error(stmt, opt = None):
     msg = msg + '"'
 
     print(msg)
+
+# フィルター結果の表示
+def plot_horses(filtered_list, label = False):
+    x =[]
+    y = []
+    l = []
+    for ho in filtered_list:
+        chakujun = str(ho.get_chakujun())
+        if chakujun == '除':
+            continue
+        else:
+            if not chakujun.isdigit():
+                chakujun = ho.result['頭 数'][0]
+            x.append(int(ho.get_ninki()))
+            y.append(int(chakujun))
+            l.append(ho.soup.find(class_ = "eng_name").get_text().replace('\n',''))
+
+    plt.scatter(x,y, alpha = .3)
+    plt.xlabel("favorite")
+    plt.ylabel("result")
+    plt.xticks(range(1,19))
+    plt.yticks(range(1,19))
+    for i, label in enumerate(l):
+        if label == True:
+            plt.text(x[i],y[i],label)
+    plt.show()
+
+#馬のリストを表示
+def dump_horses(hl):
+    for h in hl:
+        print(h)
+    return

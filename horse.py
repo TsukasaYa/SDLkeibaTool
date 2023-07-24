@@ -145,6 +145,7 @@ class Horse:
         dists = [int(d[1:]) for d in self.form['距離']]
         return sum(dists)/len(dists)
 
+    #本レース自体に絡む情報
     def get_umaban(self):
         return self.result['馬 番'][0]
     
@@ -300,6 +301,8 @@ def make_simple_rank(form):
     rank[3] = sum(arr[3:])
     return str(rank[0])+'-'+str(rank[1])+'-'+str(rank[2])+'-'+str(rank[3])
 
+
+
 #馬をフィルタするクラス
 class HorseFilter:
 
@@ -325,15 +328,15 @@ class HorseFilter:
             if not str(x).isdigit():
                 rslt = False
             if type(self.chaku) == list:
-                rslt = rslt & (self.chaku[0] <= x <= self.chaku[1])
+                rslt = rslt & (self.chaku[0] <= int(x) <= self.chaku[1])
             else:
                 rslt = rslt & (horse.get_chakujun() == self.chaku)
         if self.ninki is not None:
             x = horse.get_ninki()
-            if not str(x).isdigit():
+            if not str(x).replace('.','').isdigit():
                 rslt = False
             if type(self.ninki) == list:
-                rslt = rslt & (self.ninki[0] <= x <= self.ninki[1])
+                rslt = rslt & (self.ninki[0] <= int(x) <= self.ninki[1])
             else:
                 rslt = rslt & (x == self.ninki)
         if self.waku is not None:
@@ -341,13 +344,13 @@ class HorseFilter:
             if pd.isna(x):
                 rslt = False
             if type(self.waku) == list:
-                rslt = rslt & (self.waku[0] <= x <= self.waku[1])
+                rslt = rslt & (self.waku[0] <= int(x) <= self.waku[1])
             else:
                 rslt = rslt & (x == self.waku)
         if self.umaban is not None:
             x = horse.get_umaban()
             if type(self.umaban) == list:
-                rslt = rslt & (self.umaban[0] <= x <= self.umaban[1])
+                rslt = rslt & (self.umaban[0] <= int(x) <= self.umaban[1])
             else:
                 rslt = rslt & (x == self.umaban)
         if self.odds is not None:
@@ -372,7 +375,10 @@ class HorseFilter:
                 rslt = rslt & (x <= self.dist)
         
         if self.rest is not None:
-            rslt = rslt & horse.check_long_rest(self.rest[0], self.rest[1])
+            if type(self.rest) == list:
+                rslt = rslt & horse.check_long_rest(self.rest[0], self.rest[1])
+            else:
+                rslt = rslt & horse.check_long_rest(self.rest)
 
         if self.jockey is not None:
             x = horse.get_jockey()
@@ -441,6 +447,8 @@ class HorseFilter:
             msg = msg + 'last: {:s} , '.format(self.last)
         if self.rest is None:
             msg = msg + 'rest: - '
-        else :
+        elif type(self.rest) == list:
             msg = msg + 'rest: 間{:d}日 {:d}走目'.format(self.rest[0],self.rest[1])
+        else:
+            msg = msg + 'rest: 間{:d}日'.format(self.rest)
         return msg + '}'

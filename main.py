@@ -143,12 +143,16 @@ print(hf)
 print(ff)
 print(fe)
 plot_horses(horse_list)
-print_score(horse_list, horse_list)
+filtered_list = horse_list
+print_score(horse_list, filtered_list)
 
 loop = True
 while(loop):
     print('クエリは次の要素をスペース区切りで記入、&で複数可: [hf/fe/ff] [変更したいフィールド] [変更後の値]+')
-    qi.interpret(input('>'))
+    rslt = qi.interpret(input('>'), filtered_list)
+    if rslt == -1:
+        loop = False
+        continue
     
     print(hf)
     print(ff)

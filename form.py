@@ -36,19 +36,19 @@ class FormFilter:
         if self.smile is None:
             msg = msg + 'smile: - , '
         else:
-            msg = msg + 'smile: '+str(self.smile)+' , '
+            msg = msg + 'smile: '+ ' '.join(self.smile)+' , '
         if self.course is None:
             msg = msg + 'course: - , '
         else:
-            msg = msg + 'course: '+str(self.course)+' , '
+            msg = msg + 'course: '+ ' '.join(self.course)+' , '
         if self.style is None:
             msg = msg + 'style: - , '
         else:
-            msg = msg + 'style: '+str(self.style)+' , '
+            msg = msg + 'style: '+ ' '.join(self.style)+' , '
         if self.race is None:
             msg = msg + 'race: - , '
         else:
-            msg = msg + 'race: '+self.race.join(' ')+' , '
+            msg = msg + 'race: '+ ' '.join(self.race)+' , '
         if self.post is None:
             msg = msg + 'post: -'
         else:
@@ -76,10 +76,10 @@ class FormFilter:
 
     #前n走
     def get_n_form(self, form, n):
-        n = max(len(form),n)
+        n = min(len(form),n)
         return form[0:n]
     
-    def contains_race_name(name, targets):
+    def contains_race_name(self, name, targets):
         for target in targets:
             if target in name:
                 return True
@@ -155,9 +155,9 @@ class FormEvaluator:
         if self.rank is None:
             msg = msg + 'rank: -'
         elif type(self.rank) == list:
-            msg = msg + 'rank: {:d} ~ {:d}'.format(self.rank[0],self.rank[1])
+            msg = msg + 'rank: {:.2f} ~ {:.2f}'.format(self.rank[0],self.rank[1])
         else:
-            msg = msg + 'rank: {:d}'.format(self.rank)
+            msg = msg + 'rank: {:.2f}'.format(self.rank)
         return msg + '}'
 
 
