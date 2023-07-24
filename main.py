@@ -1,6 +1,6 @@
 import raceList
 from race import Race
-from horse import Horse
+from horse import Horse, HorseFilter
 import form
 import matplotlib.pyplot as plt
 
@@ -89,20 +89,42 @@ def isfloat(s):  # 浮動小数点数値かどうかを判定する関数
     else:
         return True  # 上手くいけば True
 
-def input_error(stmt):
-    msg = '[main.py] input is not valid "'
+def input_error(stmt, opt = None):
+    msg = '[main.py] input is not valid '
+    if opt is not None:
+        msg += opt
+    
+    msg += '"'
     for tk in stmt:
-        msg = msg +tk + ' '
+        msg = msg +tk
+        if not tk == stmt[-1]:
+            msg += ' '
     msg = msg + '"'
+
     print(msg)
 
 #---ここからメイン処理---
-race_name = "中京記念"
-race_list = raceList.get_race_list(race_name)
+loop = True
+while loop:
+    race_name = input('レース名>')
+    try:
+        race_list = raceList.get_race_list(race_name)
+        if len(race_list) == 0:
+            print('no hit')
+            continue
+        print(race_list[['開催', 'レース名', '距離', 'ID']][0:5])
+    except KeyError:
+        print('no hit! please input other racename')
+        continue
+    ans = input('これで良いですか? y/n >')
+    if ans =='y':
+        loop = False
 
-YEARS_MAX = 1
+years = int(input('何年分取得しますか? >'))
+YEARS_MAX = 20
+years = min(years, YEARS_MAX, len(race_list))
 races = []
-for years_ago in range(YEARS_MAX):
+for years_ago in range(years):
     race_id = race_list["ID"][years_ago]
     race_date = race_list["開催日"][years_ago]
     races.append(Race(race_id, race_name, race_date))
@@ -114,49 +136,61 @@ for r in races:
 
 ff = form.FormFilter()
 fe = form.FormEvaluator()
+hf = HorseFilter()
 
 loop = True
 while(loop):
+    print(hf)
     print(ff)
     print(fe)
 
-    filtered_list = [h for h in horse_list if fe.eval(ff.filter(h.form))]
+    filtered_horses = [h for h in horse_list if hf.filter(h) == True]
+    filtered_list = [h for h in filtered_horses if fe.eval(ff.filter(h.form))]
     show_result(horse_list, filtered_list, False)
 
-    print('クエリは次の要素をスペース区切りで記入、&で複数可: [fe/ff] [変更したいフィールド] [変更後の閾値 1 or 2 個]')
+    print('クエリは次の要素をスペース区切りで記入、&で複数可: [hf/fe/ff] [変更したいフィールド] [変更後の値]+')
     #入力をもとにフィルタを変更する
     query = input('>')
     for stmt in query.split('&'):
         stmt = [token for token in stmt.split(' ') if token != '']
-        if len(stmt) >= 1 and stmt[0] == 'q':
+        if len(stmt) >= 1 and (stmt[0] == 'q' or stmt[0] == 'quit'):
             loop = False
             continue
-
-        if len(stmt) < 2:
-            input_error(stmt)
+        
+        if stmt[0] == 'dump':
+            dump_horses(filtered_list)
+        elif len(stmt) < 2:
+            input_error(stmt, ", few token")
             continue
         
         if stmt[0] == 'ff':
-            if stmt[1] == 'pre':
+            if stmt[1] == 'clear' or stmt[1] == 'c':
+                ff.pre = None
+                ff.smile = None
+                ff.course = None
+                ff.race = None
+                ff.style = None
+                ff.post = None
+            elif stmt[1] == 'pre':
                 if len(stmt)== 2:
                     ff.pre = None
                 else:
-                    ff.pre = float(stmt[2])
+                    ff.pre = int(stmt[2])
             elif stmt[1] == 'smile':
                 if len(stmt)== 2:
                     ff.smile = None
                 else:
-                    ff.smile = stmt[2]
+                    ff.smile = stmt[2:]
             elif stmt[1] == 'course':
                 if len(stmt)== 2:
                     ff.course = None
                 else:
-                    ff.course = stmt[2]
+                    ff.course = stmt[2:]
             elif stmt[1] == 'style':
                 if len(stmt)== 2:
                     ff.style = None
                 else:
-                    ff.style = stmt[2]
+                    ff.style = stmt[2:]
             elif stmt[1] == 'race':
                 if len(stmt)== 2:
                     ff.race = None
@@ -166,7 +200,7 @@ while(loop):
                 if len(stmt)== 2:
                     ff.post = None
                 else:
-                    ff.post = float(stmt[2])
+                    ff.post = int(stmt[2])
             elif stmt[1] == 'crear':
                 ff.post = None
                 ff.pre = None
@@ -175,9 +209,9 @@ while(loop):
                 ff.smile= None
                 ff.course = None
             else:
-                input_error(stmt)
+                input_error(stmt, "at 2nd token")
         elif stmt[0] == 'fe':
-            if stmt[1] == 'clear':
+            if stmt[1] == 'clear' or stmt[1] == 'c':
                 fe.win = None
                 fe.show = None
                 fe.rank = None
@@ -194,5 +228,42 @@ while(loop):
                         input_error(stmt)
                 except AttributeError:
                     input_error(stmt)
+        elif stmt[0] == 'hf':
+            if stmt[1] == 'clear' or stmt[1] == 'c':
+                hf.chaku = None
+                hf.ninki = None
+                hf.odds = None
+                hf.jockey = None
+                hf.waku = None
+                hf.umaban = None
+                hf.last = None
+                hf.dist = None
+                hf.rest = None
+                hf.style = None
+            else:
+                try:
+                    getattr(hf, stmt[1])
+                    if len(stmt) == 2:
+                        setattr(hf, stmt[1], None)
+                    elif stmt[1] in ['style']:
+                        setattr(hf, stmt[1], stmt[2:])
+                    elif len(stmt) == 3:
+                        if(stmt[1] in ['jockey','last','style']):
+                            val = stmt[2]
+                        elif(stmt[1] in ['odds','dist']):
+                            val = float(stmt[2])
+                        else:
+                            val = int(stmt[2])
+                        setattr(hf, stmt[1], val)
+                    elif len(stmt) == 4:
+                        if stmt[1] in ['odds','dist']:
+                            val = [float(stmt[2]),float(stmt[3])]
+                        else:
+                            val = [int(stmt[2]), int(stmt[3])]
+                        setattr(hf, stmt[1], val)
+                    else:
+                        input_error(stmt)
+                except AttributeError:
+                    input_error(stmt)
         else:
-            input_error(stmt)
+            input_error(stmt, "at 1st token")

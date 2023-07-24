@@ -16,6 +16,7 @@ class Race:
         self.name = name
         self.date = date
         self.html = get_race_html(self.id, self.name)
+        self.html = deleteTag(self.html,'diary_snap_cut')
         self.results = get_race_dataframe(self.html)
 
         tan_list, huku_list = get_payback_list(self.html)
@@ -52,7 +53,10 @@ def get_race_html(id, name):
 
 #HTMLから上がり等を含むレースのデータフレームを取得
 def get_race_dataframe(html):
-    dfs = pd.read_html(deleteTag(html,'diary_snap_cut'))
+    deleteTag(html,'diary_snap_cut')
+    soup = BeautifulSoup(html, 'html.parser')
+    dfs = [pd.read_html(str(t))[0] for t in soup.select('table:has(tr td)')]
+    #dfs = pd.read_html(html)
     dfs[0] = dfs[0].drop(columns=['備考', 'ﾀｲﾑ 指数', '調教 ﾀｲﾑ', '厩舎 ｺﾒﾝﾄ', '馬主', '賞金 (万円)'])
     return dfs
 
@@ -92,7 +96,7 @@ def get_payback_list(html):
 
 
 result_header = ['着 順', '枠 番', '馬 番', '馬名', '性齢', '斤量', '騎手', 'タイム', '着差', '通過', '上り',
-                                 '単勝', '人 気', '馬体重', '調教師', 'ID', '単勝払戻', '複勝払戻']
+                 '単勝', '人 気', '馬体重', '調教師', 'ID', '単勝払戻', '複勝払戻']
 
 #ファイル入出力
 RACE_DIR_PATH = './races'

@@ -48,7 +48,7 @@ class FormFilter:
         if self.race is None:
             msg = msg + 'race: - , '
         else:
-            msg = msg + 'race: '+str(self.race)+' , '
+            msg = msg + 'race: '+self.race.join(' ')+' , '
         if self.post is None:
             msg = msg + 'post: -'
         else:
@@ -68,15 +68,22 @@ class FormFilter:
     def get_form_by_style(self, form, style):
         return form.query('style in @style')
 
-    #該当するレース名で抽出
-    def get_form_by_race(self, form, race):
-        race = race.replace('(','\(').replace(')','\)')
-        return form.query('レース名.str.contains(@race)')
+    #該当するレース名で抽出 races := [レース名 :str]
+    def get_form_by_race(self, form, races):
+        #race = race.replace('(','\(').replace(')','\)')
+        #return form.query('レース名.str.contains(@race)')
+        return form[form['レース名'].apply(self.contains_race_name, targets=races)]
 
     #前n走
     def get_n_form(self, form, n):
         n = max(len(form),n)
         return form[0:n]
+    
+    def contains_race_name(name, targets):
+        for target in targets:
+            if target in name:
+                return True
+        return False
 
 #レースの戦績関連の処理、馬Classのformを引数としてもらってなんやかんやしてbooleanを返す
 class FormEvaluator:
@@ -190,7 +197,7 @@ def is_show_rate_in(form, th_min=0, th_max=1):
 #上り3F
 def get_fastest_3F(form):
     time_3f = min(form.dropna(subset = '上り')['上り'])
-    row_idx = form.dropna(subset = '上り')['上り'].idxth_min()
+    row_idx = form.dropna(subset = '上り')['上り'].idxmin()
     return row_idx, time_3f
 
 def is_3F_in(form, th_min=0, th_max=99):

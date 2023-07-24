@@ -156,6 +156,12 @@ class Horse:
     
     def get_ninki(self):
         return self.result['人 気'][0]
+    
+    def get_odds(self):
+        return self.result['オ ッ ズ'][0]
+    
+    def get_jockey(self):
+        return self.result['騎手'][0]
 
     #---戦績のフィルタ用関数---
     #指定された距離区分についての戦績を返す
@@ -293,3 +299,148 @@ def make_simple_rank(form):
     rank[2] = arr[2]
     rank[3] = sum(arr[3:])
     return str(rank[0])+'-'+str(rank[1])+'-'+str(rank[2])+'-'+str(rank[3])
+
+#馬をフィルタするクラス
+class HorseFilter:
+
+    def __init__(self, chaku=None, ninki=None, odds=None, waku=None, umaban=None, jockey=None, style=None, dist=None, last=None, rest=None):
+        self.chaku = chaku
+        self.ninki = ninki
+        self.odds = odds
+        self.waku = waku
+        self.umaban = umaban
+        self.jockey :str = jockey
+
+        self.style = style
+        self.dist = dist
+        self.last : str = last
+        self.rest = rest
+
+        self.style_th = 0.3
+    
+    def filter(self, horse:Horse):
+        rslt = True
+        if self.chaku is not None:
+            x = horse.get_chakujun()
+            if not str(x).isdigit():
+                rslt = False
+            if type(self.chaku) == list:
+                rslt = rslt & (self.chaku[0] <= x <= self.chaku[1])
+            else:
+                rslt = rslt & (horse.get_chakujun() == self.chaku)
+        if self.ninki is not None:
+            x = horse.get_ninki()
+            if not str(x).isdigit():
+                rslt = False
+            if type(self.ninki) == list:
+                rslt = rslt & (self.ninki[0] <= x <= self.ninki[1])
+            else:
+                rslt = rslt & (x == self.ninki)
+        if self.waku is not None:
+            x = horse.get_wakuban()
+            if pd.isna(x):
+                rslt = False
+            if type(self.waku) == list:
+                rslt = rslt & (self.waku[0] <= x <= self.waku[1])
+            else:
+                rslt = rslt & (x == self.waku)
+        if self.umaban is not None:
+            x = horse.get_umaban()
+            if type(self.umaban) == list:
+                rslt = rslt & (self.umaban[0] <= x <= self.umaban[1])
+            else:
+                rslt = rslt & (x == self.umaban)
+        if self.odds is not None:
+            x = horse.get_odds()
+            if type(self.odds) == list:
+                rslt = rslt & (self.odds[0] <= x <= self.odds[1])
+            else:
+                rslt = rslt & (x <= self.odds)
+
+        if self.style is not None:
+            x = horse.get_style_ratio()
+            tmp_bool = False
+            for s in self.style:
+                tmp_bool = tmp_bool | (x[s] >= self.style_th)
+            rslt = rslt & tmp_bool
+
+        if self.dist is not None:
+            x = horse.get_average_distance()
+            if type(self.dist) == list:
+                rslt = rslt & (self.dist[0] <= x <= self.dist[1])
+            else:
+                rslt = rslt & (x <= self.dist)
+        
+        if self.rest is not None:
+            rslt = rslt & horse.check_long_rest(self.rest[0], self.rest[1])
+
+        if self.jockey is not None:
+            x = horse.get_jockey()
+            rslt = rslt & (self.jockey in x)
+        if self.last is not None:
+            x = horse.get_last_race_name()
+            rslt = rslt & (self.last in x)
+
+        return rslt
+    
+    def __str__(self):
+
+        msg = 'HorseFilter{'
+
+        if self.chaku is None:
+            msg = msg + 'chaku: - , '
+        elif type(self.chaku) == list:
+            msg = msg + 'chaku: {:d} ~ {:d} , '.format(self.chaku[0],self.chaku[1])
+        else:
+            msg = msg + 'chaku: {:d} , '.format(self.chaku)
+        if self.ninki is None:
+            msg = msg + 'ninki: - , '
+        elif type(self.ninki) == list:
+            msg = msg + 'ninki: {:d} ~ {:d} , '.format(self.ninki[0],self.ninki[1])
+        else:
+            msg = msg + 'ninki: {:d} , '.format(self.ninki)
+        if self.odds is None:
+            msg = msg + 'odds: - , '
+        elif type(self.odds) == list:
+            msg = msg + 'odds: {:.1f} ~ {:.1f} , '.format(self.odds[0],self.odds[1])
+        else:
+            msg = msg + 'odds: {:.1f} , '.format(self.odds)
+        if self.umaban is None:
+            msg = msg + 'umaban: - , '
+        elif type(self.umaban) == list:
+            msg = msg + 'umaban: {:d} ~ {:d} , '.format(self.umaban[0],self.umaban[1])
+        else:
+            msg = msg + 'umaban: {:d} , '.format(self.umaban)
+        if self.waku is None:
+            msg = msg + 'waku: - , '
+        elif type(self.waku) == list:
+            msg = msg + 'waku: {:d} ~ {:d} , '.format(self.waku[0],self.waku[1])
+        else:
+            msg = msg + 'waku: {:d} , '.format(self.waku)
+        if self.jockey is None:
+            msg = msg + 'jockey: - , '
+        else:
+            msg = msg + 'jockey: {:s} , '.format(self.jockey)
+
+        if self.style is None:
+            msg = msg + 'style: - , '
+        else:
+            msg = msg + 'style:'
+            for s in self.style:
+                msg = msg + ' ' + s
+            msg = msg + ' , '
+        if self.dist is None:
+            msg = msg + 'dist: - , '
+        elif type(self.dist) == list:
+            msg = msg + 'dist: {:.1f} ~ {:.1f} , '.format(self.dist[0],self.dist[1])
+        else:
+            msg = msg + 'dist: {:.1f} , '.format(self.dist)
+        if self.last is None:
+            msg = msg + 'last: - , '
+        else:
+            msg = msg + 'last: {:s} , '.format(self.last)
+        if self.rest is None:
+            msg = msg + 'rest: - '
+        else :
+            msg = msg + 'rest: 間{:d}日 {:d}走目'.format(self.rest[0],self.rest[1])
+        return msg + '}'
