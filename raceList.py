@@ -6,7 +6,7 @@ import time
 # 指定されたレースについて、レースID付きのデータフレームを返す
 def get_race_list(racename):
     df = search_race_list(racename)
-    return append_id_colmun(df)
+    return append_id_colmun(df).dropna(subset='ID').reset_index(drop=True)
 
 # 日本語のレース名をURLに使えるようにパーセントエンコーディングする
 def get_encoded_racename(racename):
