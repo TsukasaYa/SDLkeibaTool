@@ -15,12 +15,11 @@ class SampleApp(tk.Tk):
 
         self.race_name = ''
         self.races = []
-        self.horce_list = []
+        self.horse_list = []
 
+        self.hf = HorseFilter()
         self.ff = form.FormFilter()
         self.fe = form.FormEvaluator()
-        self.hf = HorseFilter()
-        self.qi = QueryInterpreter(self.hf,self.ff,self.fe)
         
         container = tk.Frame(self)
         container.pack(side="top", fill="both", expand=True)

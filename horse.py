@@ -327,7 +327,7 @@ class HorseFilter:
             x = horse.get_chakujun()
             if not str(x).isdigit():
                 rslt = False
-            if type(self.chaku) == list:
+            elif type(self.chaku) == list:
                 rslt = rslt & (self.chaku[0] <= int(x) <= self.chaku[1])
             else:
                 rslt = rslt & (horse.get_chakujun() == self.chaku)
@@ -335,7 +335,7 @@ class HorseFilter:
             x = horse.get_ninki()
             if not str(x).replace('.','').isdigit():
                 rslt = False
-            if type(self.ninki) == list:
+            elif type(self.ninki) == list:
                 rslt = rslt & (self.ninki[0] <= int(x) <= self.ninki[1])
             else:
                 rslt = rslt & (x == self.ninki)
@@ -343,7 +343,7 @@ class HorseFilter:
             x = horse.get_wakuban()
             if pd.isna(x):
                 rslt = False
-            if type(self.waku) == list:
+            elif type(self.waku) == list:
                 rslt = rslt & (self.waku[0] <= int(x) <= self.waku[1])
             else:
                 rslt = rslt & (x == self.waku)
