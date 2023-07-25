@@ -19,6 +19,8 @@ class Race:
         self.html = deleteTag(self.html,'diary_snap_cut')
         self.results = get_race_dataframe(self.html)
 
+        self.num = len(self.results[0])
+
         tan_list, huku_list = get_payback_list(self.html)
         self.results[0] = self.results[0].assign(horseID = get_horseID(self.html))
         self.results[0] = self.results[0].assign(単勝払戻 = tan_list)
@@ -29,6 +31,12 @@ class Race:
         for i,h_row in self.results[0].iterrows():
             horses.append(Horse(self.id, self.date, h_row['horseID'], h_row['馬名'], h_row['単勝払戻'], h_row['複勝払戻']))
         return horses
+    
+    def get_horses_args(self):
+        horses_ids = []
+        for i,h_row in self.results[0].iterrows():
+            horses_ids.append((self.id, self.date, h_row['horseID'], h_row['馬名'], h_row['単勝払戻'], h_row['複勝払戻']))
+        return horses_ids
     
 #レースデータを作成する補助関数群
 

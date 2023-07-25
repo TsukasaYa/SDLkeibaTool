@@ -11,9 +11,9 @@ import tkinter as tk
 # メインウィンドウを作成
 root = tk.Tk()
 
+#こいつらグローバル変数
 races = []
 horce_list = []
-
 ff = form.FormFilter()
 fe = form.FormEvaluator()
 hf = HorseFilter()
