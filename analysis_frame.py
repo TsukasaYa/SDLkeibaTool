@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+import webbrowser
 
 from horse import HorseFilter
 import form
@@ -40,6 +41,9 @@ class AnalysisFrame(tk.Frame):
         button2 = tk.Button(title_frame, text="散布図", command=self.plot_scatter)
         button2.pack(side='left')
 
+        button4 = tk.Button(title_frame, text="netkeiba", command=self.show_website)
+        button4.pack(side='left')
+
 
         #---馬のフィルタ欄
         horse_tl = tk.Label(horse_frame, text='馬の条件でフィルタ', anchor="w", background='#ff00ff')
@@ -53,16 +57,16 @@ class AnalysisFrame(tk.Frame):
             self.horse_ch[ttl] =tk.Label(horse_frame, text=ttl, anchor="w")
             self.horse_ch[ttl].grid(row=1+i, column=1)
             self.horse_cf[ttl] = tk.Frame(horse_frame)
-            self.horse_cf[ttl].grid(row=1+i, column=2)
+            self.horse_cf[ttl].grid(row=1+i, column=2, sticky=tk.E+tk.W)
 
         self.horse_ce['脚質'] = self.ConditionStyle(self.horse_cf['脚質'], self.hf, 'style')
-        self.horse_ce['平均距離'] = self.ConditonFloat(self.horse_cf['平均距離'], self.hf, 'dist', 1, 18)
-        self.horse_ce['着順'] = self.ConditonInt(self.horse_cf['着順'], self.hf, 'chaku', 1, 18)
-        self.horse_ce['人気'] = self.ConditonInt(self.horse_cf['人気'], self.hf, 'ninki', 1, 18)
-        self.horse_ce['オッズ'] = self.ConditonFloat(self.horse_cf['オッズ'], self.hf, 'odds', 1, 18)
-        self.horse_ce['馬番'] = self.ConditonInt(self.horse_cf['馬番'], self.hf, 'umaban', 1, 18)
-        self.horse_ce['枠番'] = self.ConditonInt(self.horse_cf['枠番'], self.hf, 'waku', 1, 18)
-        self.horse_ce['長期休養'] = self.ConditonInt(self.horse_cf['長期休養'], self.hf, 'rest', 180, 1)
+        self.horse_ce['平均距離'] = self.ConditonFloat(self.horse_cf['平均距離'], self.hf, 'dist', 1, 10000.0)
+        self.horse_ce['着順'] = self.ConditionIntRange(self.horse_cf['着順'], self.hf, 'chaku', 1, 18)
+        self.horse_ce['人気'] = self.ConditionIntRange(self.horse_cf['人気'], self.hf, 'ninki', 1, 18)
+        self.horse_ce['オッズ'] = self.ConditonFloat(self.horse_cf['オッズ'], self.hf, 'odds', 1, 10000.0)
+        self.horse_ce['馬番'] = self.ConditionIntRange(self.horse_cf['馬番'], self.hf, 'umaban', 1, 18)
+        self.horse_ce['枠番'] = self.ConditionIntRange(self.horse_cf['枠番'], self.hf, 'waku', 1, 8)
+        self.horse_ce['長期休養'] = self.ConditionIntRange(self.horse_cf['長期休養'], self.hf, 'rest', 180, 1)
 
         #---戦績のフィルタ欄
         form_tl = tk.Label(form_frame, text='戦績の条件でフィルタ', anchor="w", background='#00ffff')
@@ -80,6 +84,9 @@ class AnalysisFrame(tk.Frame):
             self.form_cf[ttl] = tk.Frame(form_frame)
             self.form_cf[ttl].grid(row=1+i, column=2)
 
+        self.form_ce['近走(pre)'] = self.ConditionInt(self.form_cf['近走(pre)'], self.ff, 'pre')
+        self.form_ce['近走(post)'] = self.ConditionInt(self.form_cf['近走(post)'], self.ff, 'post')
+        self.form_ce['コース'] = self.ConditionCourse(self.form_cf['コース'], self.ff, 'course')
         self.form_ce['脚質'] = self.ConditionStyle(self.form_cf['脚質'], self.ff, 'style')
         self.form_ce['勝率'] = self.ConditonFloat(self.form_cf['勝率'], self.fe, 'win', 0.0, 1.0)
         self.form_ce['複勝率'] = self.ConditonFloat(self.form_cf['複勝率'], self.fe, 'show', 0.0, 1.0)
@@ -88,10 +95,14 @@ class AnalysisFrame(tk.Frame):
         self.form_ce['平均着差'] = self.ConditonFloat(self.form_cf['平均着差'], self.fe, 'margin', 0.0, 1.0)
 
         #---絞り込み結果の表示frame
-        self.display_columns = ['年', 'バ名', '人気', '着順']
-        self.horse_display = ttk.Treeview(text_frame, columns=self.display_columns,show='headings')
+        self.display_columns = ['ID', '年', 'バ名', '人気', '着順', '脚質']
+        self.display_width = [30,50,200,50,50,50]
+        self.horse_display = ttk.Treeview(text_frame, columns=self.display_columns)
         for c in self.display_columns:
             self.horse_display.heading(c, text=c)
+            self.horse_display.column(c, width = self.display_width[self.display_columns.index(c)])
+            pass
+
         self.horse_display.pack(side='bottom')
 
         self.hit_l = tk.Label(text_frame, text='ヒット数: - ')
@@ -137,11 +148,11 @@ class AnalysisFrame(tk.Frame):
         self.winP_l['text'] = '1着precise:{:.2f}'.format(num_filtered_win / max(len(self.filtered_list),1))
         self.winR_l['text'] = '1着recall:{:.2f}'.format(num_filtered_win / max(num_horses_win,1))
         self.showP_l['text'] = '複勝precise:{:.2f}'.format(num_filtered_show / max(len(self.filtered_list),1))
-        self.showR_l['text'] = '複勝recall:{:.2f}'.format(num_filtered_win / max(num_horses_show,1))
+        self.showR_l['text'] = '複勝recall:{:.2f}'.format(num_filtered_show / max(num_horses_show,1))
 
         self.horse_display.delete(*self.horse_display.get_children())
-        for h in self.filtered_list:
-            self.horse_display.insert("", "end", values=[h.date[0:4], h.name, h.result['人 気'][0], h.result['着 順'][0]])
+        for i,h in enumerate(self.filtered_list):
+            self.horse_display.insert("", "end", values=[i, h.date[0:4], h.name, h.result['人 気'][0], h.result['着 順'][0], h.result['style'][0]])
     
     def condition_reset(self):
         for ch in self.horse_ce.values():
@@ -153,7 +164,16 @@ class AnalysisFrame(tk.Frame):
 
     def plot_scatter(self):
         listUtil.plot_horses(self.filtered_list)
-    
+
+    def show_website(self):
+        item_id = self.horse_display.selection()
+        if not item_id:
+            return
+        val = self.horse_display.item(item_id[0], 'values')
+        horse = self.filtered_list[int(val[self.display_columns.index('ID')])]
+        webbrowser.open(horse.url)
+        
+    #---脚質入力欄を表現するクラス群
     class ConditionStyle:
         def __init__(self, frame, target, var_name) -> None:
             self.target = target
@@ -182,9 +202,59 @@ class AnalysisFrame(tk.Frame):
             else:
                 setattr(self.target, self.var_name, style)
 
-    # フィルタのフィールド型がintである入力欄
+    #---コース入力欄を表現するクラス群
+    class ConditionCourse:
+        def __init__(self, frame, target, var_name) -> None:
+            self.target = target
+            self.frame = frame
+            self.var_name = var_name
 
-    class ConditonInt:
+            self.bv = {}
+            self.cb = {}
+            for i,s in enumerate(['札幌','函館','福島','新潟','東京','中山','中京','京都','阪神','小倉']):
+                self.bv[s] = tk.BooleanVar()
+                self.cb[s] = tk.Checkbutton(frame, text=s,variable=self.bv[s])
+                self.cb[s].grid(row = i//5, column = i%5)
+
+        def reset(self):
+            setattr(self.target, self.var_name, None)
+            for v in self.bv.values():
+                v.set(False)
+        
+        def set_condition(self):
+            course = []
+            for s in ['札幌','函館','福島','新潟','東京','中山','中京','京都','阪神','小倉']:
+                if self.bv[s].get():
+                    course.append(s)
+            if len(course) == 0:
+                setattr(self.target, self.var_name, None)
+            else:
+                setattr(self.target, self.var_name, course)
+
+    # フィルタのフィールド型がintの入力欄
+    class ConditionInt:
+        def __init__(self, frame, target, var_name):
+            self.target = target
+            self.frame = frame
+            self.var_name = var_name
+
+            self.entry = tk.Entry(frame)
+            self.entry.pack(side='left')
+        
+        def reset(self):
+            setattr(self.target, self.var_name, None)
+            self.entry.delete(0, tk.END)
+
+        def set_condition(self):
+            num = self.entry.get()
+            if num == '':
+                setattr(self.target, self.var_name, None)
+            else:
+                num = int(num)
+                setattr(self.target, self.var_name, num)
+
+    # フィルタのフィールド型がintで範囲指定する入力欄
+    class ConditionIntRange:
 
         def __init__(self, frame, target, var_name, default_min, default_max) -> None:
             self.target = target
